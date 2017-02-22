@@ -1,0 +1,223 @@
+---
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+```{r}
+install.packages("nycflights13")
+library(nycflights13)
+install.packages("knitr")
+library(knitr)
+if (!require('rmarkdown')) 
+{
+  install.packages('rmarkdown');
+  library(rmarkdown);
+}
+data(flights)
+library(dplyr)
+summary(flights)
+names(flights)
+str(flights)
+```
+
+
+1 a) How many flights were there to and from NYC in 2013? 
+
+```{r}
+nrow(flights)
+
+df.toNYC<-flights %>%
+  select(flight,dest)%>%
+  filter(dest=="EWR" | dest=="JFK" | dest=="LGA")
+df.toNYC
+```
+
+Using the above code, we find that all the flights departed from NYC and one
+flight arrived at LGA airport. So, total number of flights to and from NYC= 336776
+
+b) How many flights were there from NYC airports to Seattle (SEA) in 2013? 
+
+```{r}
+df<-flights %>%
+  select(flight, origin, dest) %>%
+  filter(dest=="SEA") %>%
+  summarise(count=n())
+df
+```
+
+No. of flights from NYC to Seattle is 3923
+
+c) How many airlines fly from NYC to Seattle?
+
+```{r}
+df.unique<-flights %>%
+  select(flight, carrier, origin, dest) %>%
+  filter(dest=="SEA") %>%
+  distinct(carrier)%>%
+  summarise(count=n())
+df.unique
+
+
+df.unique<-flights %>%
+  select(flight, carrier, origin, dest) %>%
+  filter(dest=="SEA") %>%
+  distinct(carrier)
+df.unique
+```
+
+There are 5 unique airlines to Seattle. The carriers are AS,DL,UA,B6,AA
+
+d) What is the average arrival delay for flights from NYC to Seattle? 
+
+```{r}
+df.delay<-flights %>%
+  filter(dest=="SEA") %>%
+  summarise(mean(arr_delay, na.rm=T))
+df.delay
+```
+
+The average arrival delay for flights from NYC to Seattle is -1.099099
+
+2 a) What is the mean arrival delay time? What is the median arrival delay time? 
+
+```{r}
+fl.nyc<-data.frame(flights)
+arrdelay.avg<-mean(fl.nyc$arr_delay, na.rm=T)
+arrdelay.avg
+```
+
+The mean arrival delay for all flights is 6.895377
+
+```{r}
+arrdelay.med<-median(fl.nyc$arr_delay, na.rm=T)
+arrdelay.med
+```
+
+The median arrival delay for all flights is -5
+
+b) What does a negative arrival delay mean?
+
+```{r}
+neg<-flights %>%
+  select(flight, origin, dest, arr_delay) %>%
+  filter(arr_delay<0)
+neg
+```
+
+A negative arrival delay means that the flight arrived before the scheduled
+time of arrival. A positive arrival delay implies that the flight arrived
+after the scheduled time of arrival.
+
+c) Plot a histogram of arrival delay times. Does the answers you obtained in (a) 
+consistent with the shape of the delay time distribution? 
+
+```{r}
+hist(flights$arr_delay, xlab="Arrival Delay", breaks=10)
+abline(v = mean(flights$arr_delay),col = "blue",lwd = 2)
+abline(v = median(flights$arr_delay),col = "red",lwd = 2)
+```
+
+The shape of the histogram is consistent with the answers we derived from a. The
+peak of the histogram lies before Zero. This signifies a high concentration 
+of data before Zero, which implies that the median is negative and the mean 
+arrival delay is 6.89
+
+d) Is there seasonality in departure delays? Try and describe what patterns 
+you see. Is there a best month to leave New York? A worst? Why might this be
+
+```{r}
+by(flights$dep_delay, flights$month, function(x) mean(x, na.rm=T))
+```
+
+It appears that the mean departure delay time varies across the months. In 
+Spring(March-May), the mean departure delay is around 13. In Summer(June-Aug),
+the average departure delay is around 17. In Fall(Sep-Nov), the average departure
+delay is around 5.5. In Winter(Dec-Feb), the average departure delay is 12. To
+conclude, the departure delay increases from Winter and drops at Fall.
+The best month to leave NYC is November and the worst month to leave NYC is
+July. This might be because during Fall, the skies are clear and it's easier for an airline to take off. During July, there might be a lot of passenger traffic, 
+who board flights to Europe for summer vacations. NYC is the central hub for 
+these airlines and that may account for the departure delay. 
+
+3a) Plot a histogram of the total air flight time with 100 breaks. 
+(look at the help for hist()). How many peaks do you see in this distribution? 
+What is an explanation for this? 
+
+```{r}
+hist(flights$air_time, xlab="Flight airborne time", main="Histogram of Flight
+Air Times", breaks=100)
+```
+
+The number of peaks are 6. The flight air time variation can be attributed to two
+factors. Firstly, there are more short-distance flights than long-distance flights. Short distance flights take shorter air time which causes a high density in the left of the histogram around zero.Secondly, the flight time can also vary due to an atmospheric phenomena called Jet stream. The jet stream is a very high altitude wind which blows from West to East over the Atlantic Ocean. The jet stream might be responsible for the varying flight times. 
+Source: http://curious.astro.cornell.edu/about-us/40-our-solar-system/
+the-earth/climate-and-weather/68-why-do-airplanes-take-longer-to-fly-west-than-east-intermediate
+
+b) What time of day do flights most commonly depart? 
+Why might there be two most popular times of day to depart?
+
+```{r}
+fl.time<-flights %>%
+select(dep_time, hour, minute) %>%
+count(dep_time, sort=TRUE)
+head(fl.time)
+```
+
+The time of day when flights most commonly depart is 5:55AM. There are a total
+of 834 flights that depart at 5:55AM. The 2nd most popular time of day is 7:55AM
+where 820 flights depart. 
+The timings of the flights suggest that early morning flights are mostly preferred by passengers.This may be due to the fact that air traffic is low in the morning, because of which flights depart on time and there is very low chances of delay. As the day progresses, the airspace gets more crowded
+and air traffic controllers delay flight departures. 
+
+c) Plot a box plot of departure delays and hour of departure. 
+What pattern do you see? What is an explanation for this? 
+
+```{r}
+boxplot(flights$dep_delay ~ flights$hour, xlab="Hour of departure", ylab="Departure delay in minutes")
+```
+
+From the box plot, we find that most of the values are concentrated around zero. 
+The departure hour 21:00 has the largest 3rd quartile value. Also, there are a lot of outliers in the distribution. This indicates that some flights had a higher departure delay which can be attributed to high passenger volume during the summer months.
+
+4) Develop one research question you can address using the nycflights2013 dataset. Provide two visualizations to support your exploration of this question. Discuss what you find.
+
+Research Question:
+Which airline carriers have the best and worst service in terms of the lowest 
+average flight arrival and departure delays in June 2013?
+
+```{r}
+fl.carrier<-flights %>%
+select(carrier, arr_delay, dep_delay, dest) %>%
+filter(arr_delay>0 & dep_delay>0 & flights$month==6) %>% #only positive values have been considered since they signify actual delays.
+group_by(carrier) %>%
+summarise(avg_arr_delay=mean(arr_delay, na.rm=TRUE)+mean(dep_delay, na.rm=TRUE))%>%
+arrange(desc(avg_arr_delay))
+
+fl.carrier
+```
+
+Thus, we find that the carrier OO or SkyWest Airlines has the worst average arrival and departure delays for the month of June 2013. The average delay for Skywest airlines is 288 minutes. The best airline carrier in terms of average arrival delay is Hawaiian airlines. The average arrival and departure delay for Hawaiian airlines is 92.75 minutes for the month of June 2013. 
+
+The distribution of average flight arrival and departure delay with respect to
+airline carriers is as follows:
+
+```{r}
+boxplot(fl.carrier$avg_arr_delay ~ fl.carrier$carrier, ylim=c(100,290), xlab="Airline carriers", ylab="Average delay")
+```
+
+The distribution of arrival delay and airline carriers are as follows:
+
+```{r}
+boxplot(flights$arr_delay ~ flights$carrier, xlab="Airline Carriers", ylab="Arrival delay")
+```
+
+The distribution of departure delay and airline carriers are as follows:
+
+```{r}
+boxplot(flights$dep_delay ~ flights$carrier, xlab="Airline Carriers", ylab="Departure delay")
+```
+```{r}
+rmarkdown::render("NYC-Flights Analysis.Rmd")
+```
